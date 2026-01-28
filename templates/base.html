@@ -8,7 +8,29 @@
 
     <meta name="description"
         content="{% block description %}EduShare School - A peer-to-peer learning platform where students teach and learn from each other{% endblock %}">
-    <meta name="keywords" content="education, peer learning, online courses, student teachers">
+    <meta name="keywords"
+        content="{% block keywords %}education, peer learning, online courses, student teachers{% endblock %}">
+    <meta name="author" content="EduShare School">
+    <link rel="canonical" href="{% block canonical %}{{ request.build_absolute_uri }}{% endblock %}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}EduShare School - Students Teaching Students{% endblock %}">
+    <meta property="og:description"
+        content="{% block og_description %}EduShare School - A peer-to-peer learning platform where students teach and learn from each other{% endblock %}">
+    <meta property="og:image"
+        content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'img/og-image.jpg' %}{% endblock %}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ request.build_absolute_uri }}">
+    <meta property="twitter:title"
+        content="{% block twitter_title %}EduShare School - Students Teaching Students{% endblock %}">
+    <meta property="twitter:description"
+        content="{% block twitter_description %}EduShare School - A peer-to-peer learning platform where students teach and learn from each other{% endblock %}">
+    <meta property="twitter:image"
+        content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'img/og-image.jpg' %}{% endblock %}">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -19,7 +41,9 @@
 
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
 
+    {% block schema %}{% endblock %}
     {% block extra_css %}{% endblock %}
 </head>
 

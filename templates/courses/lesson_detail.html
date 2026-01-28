@@ -2,6 +2,41 @@
 
 {% block title %}{{ lesson.title }} - EduShare School{% endblock %}
 
+{% block description %}{{ lesson.description|striptags|truncatechars:160 }}{% endblock %}
+
+{% block og_title %}{{ lesson.title }} - EduShare School{% endblock %}
+{% block og_description %}{{ lesson.description|striptags|truncatechars:200 }}{% endblock %}
+{% block og_image %}{% if lesson.thumbnail %}{{ request.scheme }}://{{ request.get_host }}{{ lesson.thumbnail.url }}{%
+else %}{{ block.super }}{% endif %}{% endblock %}
+
+{% block twitter_title %}{{ lesson.title }} - EduShare School{% endblock %}
+{% block twitter_description %}{{ lesson.description|striptags|truncatechars:200 }}{% endblock %}
+{% block twitter_image %}{% if lesson.thumbnail %}{{ request.scheme }}://{{ request.get_host }}{{ lesson.thumbnail.url
+}}{% else %}{{ block.super }}{% endif %}{% endblock %}
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LearningResource",
+  "name": "{{ lesson.title|escapejs }}",
+  "description": "{{ lesson.description|striptags|escapejs }}",
+  "url": "{{ request.build_absolute_uri }}",
+  "image": "{% if lesson.thumbnail %}{{ request.scheme }}://{{ request.get_host }}{{ lesson.thumbnail.url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% static 'img/og-image.jpg' %}{% endif %}",
+  "author": {
+    "@type": "Person",
+    "name": "{{ lesson.author.full_name|escapejs }}"
+  },
+  "dateCreated": "{{ lesson.created_at|date:'c' }}",
+  "dateModified": "{{ lesson.updated_at|date:'c' }}",
+  "educationalLevel": "{{ lesson.get_level_display }}",
+  "learningResourceType": "Lesson",
+  "isAccessibleForFree": true,
+  "inLanguage": "uz"
+}
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="row">
