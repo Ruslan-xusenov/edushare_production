@@ -1,34 +1,28 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Submission, Certificate
-from django.conf import settings
-import os
-
+from core.utils import create_notification
+from django.urls import reverse
 
 @receiver(post_save, sender=Submission)
-def create_certificate_on_completion(sender, instance, created, **kwargs):
-    """
-    Automatically generate a certificate when a submission is marked as completed
-    """
-    if instance.completed:
-        # Check if certificate already exists
-        certificate, cert_created = Certificate.objects.get_or_create(
+def notify_grading(sender, instance, created, **kwargs):
+    if not created:
+        if instance.score is not None:
+            create_notification(
+                user=instance.user,
+                notification_type='grade',
+                title=f"Topshiriq baholandi: {instance.assignment.lesson.title}",
+                message=f"Sizning topshirig'ingiz {instance.score} ballga baholandi.",
+                link=reverse('courses:lesson_detail', kwargs={'lesson_id': instance.assignment.lesson.id})
+            )
+
+@receiver(post_save, sender=Certificate)
+def notify_certificate(sender, instance, created, **kwargs):
+    if created:
+        create_notification(
             user=instance.user,
-            lesson=instance.assignment.lesson
+            notification_type='system',
+            title=f"Yangi sertifikat: {instance.lesson.title}",
+            message=f"Tabriklaymiz! Siz '{instance.lesson.title}' darsini muvaffaqiyatli yakunlab sertifikat oldingiz.",
+            link=reverse('courses:my_learning')
         )
-        
-        if cert_created:
-            # Generate PDF certificate
-            from .utils import generate_certificate_pdf
-            
-            try:
-                pdf_path = generate_certificate_pdf(certificate)
-                certificate.pdf_file = pdf_path
-                certificate.save()
-                
-                # Award points to user
-                instance.user.points += 50  # 50 points for completing a lesson
-                instance.user.save()
-                
-            except Exception as e:
-                print(f"Error generating certificate: {e}")

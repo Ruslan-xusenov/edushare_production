@@ -7,4 +7,6 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('about/', views.about, name='about'),
     path('leaderboard/', views.leaderboard, name='leaderboard'),
+    path('notifications/', views.notifications_view, name='notifications'),
+    path('notifications/read/<int:notification_id>/', views.mark_notification_read, name='mark_notification_read'),
 ]

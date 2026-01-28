@@ -14,7 +14,6 @@
                 <p class="lead text-muted">Top contributors in our learning community</p>
             </div>
 
-            <!-- Top 3 -->
             <div class="row mb-4">
                 {% for user in top_contributors|slice:":3" %}
                 <div class="col-md-4">
@@ -63,7 +62,6 @@
                 {% endfor %}
             </div>
 
-            <!-- Rest of the list -->
             <div class="card">
                 <div class="card-body">
                     {% for user in top_contributors|slice:"3:" %}

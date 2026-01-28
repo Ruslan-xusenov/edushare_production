@@ -23,8 +23,10 @@
                                 {{ submission.completed|yesno:"Completed,Pending" }}
                             </span>
                             {% if submission.score %}
-                            <span class="badge bg-primary">Score: {{ submission.score }}/{{
-                                submission.assignment.max_score }}</span>
+                            <span class="badge bg-primary">Score:
+                                {{submission.score}}/{{submission.assignment.max_score}}</span>
+
+
                             {% endif %}
                         </div>
                         <a href="{% url 'courses:lesson_detail' submission.assignment.lesson.id %}"

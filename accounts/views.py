@@ -7,9 +7,6 @@ from .forms import ProfileForm
 
 @login_required
 def profile(request):
-    """
-    Current user's profile
-    """
     user = request.user
     context = {
         'user': user,
@@ -19,9 +16,6 @@ def profile(request):
 
 @login_required
 def edit_profile(request):
-    """
-    Edit user profile
-    """
     if request.method == 'POST':
         form = ProfileForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
@@ -38,11 +32,8 @@ def edit_profile(request):
 
 
 def user_profile(request, user_id):
-    """
-    View another user's profile
-    """
     user = get_object_or_404(CustomUser, id=user_id)
     context = {
         'profile_user': user,
     }
-    return render(request, 'accounts/user_profile.html', context)
+    return render(request, 'accounts/profile.html', context)

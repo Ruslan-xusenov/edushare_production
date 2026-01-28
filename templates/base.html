@@ -6,22 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}EduShare School - Students Teaching Students{% endblock %}</title>
 
-    <!-- SEO Meta Tags -->
     <meta name="description"
         content="{% block description %}EduShare School - A peer-to-peer learning platform where students teach and learn from each other{% endblock %}">
     <meta name="keywords" content="education, peer learning, online courses, student teachers">
 
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
 
-    <!-- Custom CSS -->
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
@@ -29,7 +24,6 @@
 </head>
 
 <body>
-    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold" href="{% url 'core:home' %}">
@@ -62,7 +56,59 @@
                         </a>
                     </li>
 
+                    <!-- Search Bar (Visible on mobile within collapse, and on desktop) -->
+                    <li class="nav-item me-lg-3 my-2 my-lg-0">
+                        <form class="d-flex" action="{% url 'courses:course_list' %}" method="GET">
+                            <div class="input-group input-group-sm w-100">
+                                <input class="form-control border-0 bg-light" type="search" name="q"
+                                    placeholder="Search lessons..." aria-label="Search" value="{{ query|default:'' }}">
+                                <button class="btn btn-warning px-3" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </li>
+
                     {% if user.is_authenticated %}
+                    <li class="nav-item dropdown me-3">
+                        <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button"
+                            data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            {% if unread_count %}
+                            <span
+                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ unread_count }}
+                            </span>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="width: 300px;">
+                            <li class="dropdown-header border-bottom">Bildirishnomalar</li>
+                            {% if unread_notifications %}
+                            {% for notification in unread_notifications %}
+                            <li>
+                                <a class="dropdown-item py-2" href="{{ notification.link|default:'#' }}">
+                                    <div class="fw-bold small text-primary">
+                                        {{notification.get_notification_type_display}}</div>
+                                    <div class="small text-truncate">{{notification.title}}</div>
+                                    <div class="text-muted" style="font-size:0.75rem">
+                                        {{notification.created_at|date:"H:i, d.m.Y"}}</div>
+
+
+
+                                </a>
+                            </li>
+                            {% endfor %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item text-center small text-primary"
+                                    href="{% url 'core:notifications' %}">Barchasini ko'rish</a></li>
+                            {% else %}
+                            <li class="p-3 text-center text-muted small">Yangi bildirishnomalar yo'q</li>
+                            {% endif %}
+                        </ul>
+                    </li>
+
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                             data-bs-toggle="dropdown">
@@ -115,7 +161,6 @@
         </div>
     </nav>
 
-    <!-- Messages -->
     {% if messages %}
     <div class="container mt-3">
         {% for message in messages %}
@@ -127,12 +172,10 @@
     </div>
     {% endif %}
 
-    <!-- Main Content -->
     <main class="py-4">
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
     <footer class="bg-dark text-white mt-5 py-4">
         <div class="container">
             <div class="row">
@@ -172,7 +215,6 @@
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     {% block extra_js %}{% endblock %}

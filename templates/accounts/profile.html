@@ -6,7 +6,6 @@
 <div class="container">
     <div class="row">
         <div class="col-lg-4">
-            <!-- Profile Card -->
             <div class="card mb-4">
                 <div class="card-body text-center">
                     {% if user.avatar %}
@@ -40,7 +39,6 @@
                 </div>
             </div>
 
-            <!-- Stats -->
             <div class="card">
                 <div class="card-body">
                     <h6 class="fw-bold mb-3">My Stats</h6>
@@ -63,8 +61,7 @@
         </div>
 
         <div class="col-lg-8">
-            <!-- Tabs -->
-            <ul class="nav nav-tabs mb-4" id="profileTabs" role="tablist">
+            <ul class="nav nav-tabs mb-4 responsive-tabs" id="profileTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="lessons-tab" data-bs-toggle="tab" data-bs-target="#lessons"
                         type="button">
@@ -86,7 +83,6 @@
             </ul>
 
             <div class="tab-content" id="profileTabsContent">
-                <!-- My Lessons -->
                 <div class="tab-pane fade show active" id="lessons" role="tabpanel">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="fw-bold mb-0">Lessons I Created</h5>
@@ -129,7 +125,6 @@
                     </div>
                 </div>
 
-                <!-- Certificates -->
                 <div class="tab-pane fade" id="certificates" role="tabpanel">
                     <h5 class="fw-bold mb-3">My Certificates</h5>
 
@@ -139,13 +134,15 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <h6 class="fw-bold">{{ certificate.lesson.title }}</h6>
-                                    <p class="text-muted small mb-1">{{
-                                        certificate.lesson.sub_category.category.display_name }} - {{
-                                        certificate.lesson.sub_category.name }}</p>
+                                    <p class="text-muted small mb-1">
+                                        <span>{{certificate.lesson.sub_category.category.display_name}}</span> -
+                                        <span>{{certificate.lesson.sub_category.name}}</span></p>
                                     <small class="text-muted">
-                                        <i class="fas fa-calendar me-1"></i>Issued: {{ certificate.issued_at|date:"F d,
-                                        Y" }}
+                                        <i class="fas fa-calendar me-1"></i>Issued:
+                                        <span>{{certificate.issued_at|date:"F d, Y"}}</span>
                                     </small>
+
+
                                     <br>
                                     <small class="text-muted">
                                         <i class="fas fa-id-card me-1"></i>ID: {{ certificate.certificate_id }}
@@ -169,7 +166,6 @@
                     {% endfor %}
                 </div>
 
-                <!-- Interests -->
                 <div class="tab-pane fade" id="interests" role="tabpanel">
                     <h5 class="fw-bold mb-3">My Interests</h5>
                     {% if user.interests %}

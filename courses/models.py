@@ -4,9 +4,6 @@ from django.core.validators import FileExtensionValidator
 
 
 class Category(models.Model):
-    """
-    Main categories: Music, Sport, Computer Science, Languages, Exam Prep, Soft Skills
-    """
     CATEGORY_CHOICES = [
         ('music', 'Music'),
         ('sport', 'Sport'),
@@ -31,9 +28,6 @@ class Category(models.Model):
 
 
 class SubCategory(models.Model):
-    """
-    Sub-categories within main categories (e.g., Piano, Python, Football)
-    """
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories')
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
@@ -49,9 +43,6 @@ class SubCategory(models.Model):
 
 
 class Lesson(models.Model):
-    """
-    Video lessons created by students for other students
-    """
     LEVEL_CHOICES = [
         ('beginner', 'Beginner'),
         ('intermediate', 'Intermediate'),
@@ -60,14 +51,27 @@ class Lesson(models.Model):
     
     title = models.CharField(max_length=200)
     description = models.TextField()
-    video_url = models.URLField(help_text="YouTube unlisted link or embedded video URL")
+    video_url = models.URLField(blank=True, null=True, help_text="YouTube unlisted link or embedded video URL")
+    video_file = models.FileField(
+        upload_to='lesson_videos/', 
+        blank=True, 
+        null=True, 
+        validators=[FileExtensionValidator(['mp4', 'webm', 'ogg'])],
+        help_text="Direct video file upload"
+    )
+    resource_file = models.FileField(
+        upload_to='lesson_resources/',
+        blank=True,
+        null=True,
+        help_text="Additional lesson resources (PDF, DOCX, etc.)"
+    )
+
     thumbnail = models.ImageField(upload_to='lesson_thumbnails/', blank=True, null=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='lessons_created')
     sub_category = models.ForeignKey(SubCategory, on_delete=models.CASCADE, related_name='lessons')
     level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default='beginner')
     duration = models.CharField(max_length=50, blank=True, help_text="e.g., '15 minutes'")
     
-    # Stats
     views = models.IntegerField(default=0)
     likes = models.IntegerField(default=0)
     
@@ -82,25 +86,31 @@ class Lesson(models.Model):
         return f"{self.title} by {self.author.full_name}"
     
     def get_youtube_embed_url(self):
-        """Convert YouTube URL to embed format"""
-        if 'youtube.com/watch?v=' in self.video_url:
-            video_id = self.video_url.split('watch?v=')[-1].split('&')[0]
-            return f"https://www.youtube.com/embed/{video_id}"
-        elif 'youtu.be/' in self.video_url:
-            video_id = self.video_url.split('youtu.be/')[-1].split('?')[0]
-            return f"https://www.youtube.com/embed/{video_id}"
+        import re
+        # Regular watch URL, Short URL, Shorts, and Embed URL formats
+        patterns = [
+            r'(?:v=|\/v\/|embed\/|youtu\.be\/|shorts\/|\/e\/|watch\?v=|\?v=)([a-zA-Z0-9_-]{11})',
+            r'^[a-zA-Z0-9_-]{11}$' # Just the ID
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, self.video_url)
+            if match:
+                video_id = match.group(1) if len(match.groups()) > 0 else match.group(0)
+                return f"https://www.youtube.com/embed/{video_id}?rel=0"
+        
         return self.video_url
 
 
+
 class Assignment(models.Model):
-    """
-    Assignment associated with each lesson
-    """
     lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE, related_name='assignment')
     question_text = models.TextField(help_text="The assignment question or task description")
     max_score = models.IntegerField(default=100)
     allow_file_upload = models.BooleanField(default=True, help_text="Allow students to upload files")
     allow_text_answer = models.BooleanField(default=True, help_text="Allow students to submit text answers")
+    correct_answer = models.CharField(max_length=255, blank=True, null=True, help_text="Correct answer for automatic scoring")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -109,9 +119,6 @@ class Assignment(models.Model):
 
 
 class Submission(models.Model):
-    """
-    Student submissions for assignments
-    """
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='submissions')
     answer_text = models.TextField(blank=True, null=True)
@@ -123,6 +130,8 @@ class Submission(models.Model):
     )
     completed = models.BooleanField(default=False)
     score = models.IntegerField(null=True, blank=True)
+    points_awarded = models.BooleanField(default=False)
+    certificate_file = models.FileField(upload_to='certificates/', blank=True, null=True, help_text="Upload a certificate for this student")
     feedback = models.TextField(blank=True, null=True, help_text="Feedback from lesson author")
     submitted_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -137,9 +146,6 @@ class Submission(models.Model):
 
 
 class Certificate(models.Model):
-    """
-    Auto-generated certificates for completed lessons
-    """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='certificates')
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='certificates')
     certificate_id = models.CharField(max_length=50, unique=True, editable=False)
@@ -161,9 +167,6 @@ class Certificate(models.Model):
 
 
 class LessonLike(models.Model):
-    """
-    Track which users liked which lessons
-    """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='lesson_likes')
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='liked_by')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -176,12 +179,10 @@ class LessonLike(models.Model):
 
 
 class Comment(models.Model):
-    """
-    User comments on lessons
-    """
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comments')
     content = models.TextField()
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -189,3 +190,41 @@ class Comment(models.Model):
     
     def __str__(self):
         return f"Comment by {self.user.full_name} on {self.lesson.title}"
+
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=Submission)
+def handle_submission_grading(sender, instance, created, **kwargs):
+    """
+    Automatically award points and generate certificate when a submission is graded.
+    """
+    if instance.score is not None and not instance.points_awarded:
+        # Award points
+        user = instance.user
+        user.points += instance.score
+        user.save()
+        
+        # Mark as awarded
+        Submission.objects.filter(id=instance.id).update(points_awarded=True)
+        
+    # Generate/Sync certificate if passed (>= 50%)
+    if instance.score is not None and instance.score >= (instance.assignment.max_score / 2):
+        cert, created = Certificate.objects.get_or_create(
+            user=instance.user,
+            lesson=instance.assignment.lesson
+        )
+        
+        # If admin uploaded a specific certificate file, use it
+        if instance.certificate_file:
+            cert.pdf_file = instance.certificate_file
+            cert.save()
+        # If no certificate file exists (newly created or was empty), generate one
+        elif not cert.pdf_file:
+            from .utils import generate_certificate_pdf
+            generate_certificate_pdf(cert)
+
+
+
+

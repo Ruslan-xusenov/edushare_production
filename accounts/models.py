@@ -3,10 +3,6 @@ from django.db import models
 
 
 class CustomUser(AbstractUser):
-    """
-    Custom user model for EduShare platform
-    Each user can be both a teacher (content creator) and a learner
-    """
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=200)
     school = models.CharField(max_length=200, blank=True, null=True)
@@ -30,10 +26,8 @@ class CustomUser(AbstractUser):
         return f"{self.full_name} ({self.email})"
     
     def get_completed_courses_count(self):
-        """Returns the number of courses this user has completed"""
         from courses.models import Submission
         return Submission.objects.filter(user=self, completed=True).count()
     
     def get_created_lessons_count(self):
-        """Returns the number of lessons this user has created"""
         return self.lessons_created.count()
