@@ -51,8 +51,7 @@ knowledge.{% endblock %}
                     <select name="category" class="form-select">
                         <option value="">All Categories</option>
                         {% for category in categories %}
-                        <option value="{{ category.id }}" {% if selected_category==category.id|stringformat:"s"
-                            %}selected{% endif %}>{{ category.display_name }}</option>
+                        <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.display_name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -60,11 +59,11 @@ knowledge.{% endblock %}
                 <div class="col-md-3">
                     <select name="level" class="form-select">
                         <option value="">All Levels</option>
-                        <option value="beginner" {% if selected_level=="beginner" %}selected{% endif %}>Beginner
+                        <option value="beginner" {% if selected_level == "beginner" %}selected{% endif %}>Beginner
                         </option>
-                        <option value="intermediate" {% if selected_level=="intermediate" %}selected{% endif %}>
+                        <option value="intermediate" {% if selected_level == "intermediate" %}selected{% endif %}>
                             Intermediate</option>
-                        <option value="advanced" {% if selected_level=="advanced" %}selected{% endif %}>Advanced
+                        <option value="advanced" {% if selected_level == "advanced" %}selected{% endif %}>Advanced
                         </option>
                     </select>
                 </div>

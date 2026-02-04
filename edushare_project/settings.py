@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-change-me-in-production')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1', 'ruslandev.uz', 'www.ruslandev.uz').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,kali').split(',')
 
 
 
@@ -36,6 +36,11 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.sitemaps',
     
+    # Third-party security apps
+    'corsheaders',
+    'csp',
+    
+    # Authentication
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -43,22 +48,28 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap4',
     
+    # Custom apps
     'accounts',
     'courses',
     'core',
+    
+    # Security
     'axes',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS himoyasi
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'csp.middleware.CSPMiddleware',  # Content Security Policy
     'allauth.account.middleware.AccountMiddleware',
-    'axes.middleware.AxesMiddleware',
+    'axes.middleware.AxesMiddleware',  # Brute-force himoyasi
+    'core.middleware.AdvancedSecurityMiddleware',  # DDoS, SQL Injection, XSS himoyasi
 ]
 
 ROOT_URLCONF = 'edushare_project.urls'
@@ -139,6 +150,16 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Cache Configuration (Rate limiting uchun)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'edushare-cache',
+        'OPTIONS': {
+            'MAX_ENTRIES': 10000
+        }
+    }
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -219,3 +240,72 @@ AXES_COOLOFF_TIME = 1  # Hour
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_TEMPLATE = 'accounts/lockout.html'
 AXES_HANDLER = 'axes.handlers.database.AxesDatabaseHandler'
+
+# Qo'shimcha xavfsizlik sozlamalari
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF himoyasi
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 86400  # 1 kun (sekundlarda)
+SESSION_SAVE_EVERY_REQUEST = True
+
+# File upload security
+ALLOWED_UPLOAD_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.mp4', '.webm', '.ogg']
+FILE_UPLOAD_PERMISSIONS = 0o644
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'edushare.log',
+            'formatter': 'verbose',
+        },
+        'security_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'security.log',
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'core.middleware': {
+            'handlers': ['security_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'core.signals': {
+            'handlers': ['security_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'axes': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+}
+
+# Import advanced security settings
+try:
+    from .security_settings import *
+except ImportError:
+    pass
