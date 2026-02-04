@@ -179,11 +179,15 @@ class AdvancedSecurityMiddleware:
         # Request ni davom ettirish
         response = self.get_response(request)
         
-        # Security headers qo'shish
+        # Security headers qo'shish (barcha response'larga)
+        if not hasattr(response, 'headers'):
+            return response
+            
         response['X-Content-Type-Options'] = 'nosniff'
         response['X-Frame-Options'] = 'DENY'
         response['X-XSS-Protection'] = '1; mode=block'
         response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
         
         return response
     
