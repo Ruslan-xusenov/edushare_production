@@ -207,6 +207,30 @@ def sanitize_filename(filename):
     return filename
 
 
+def get_client_ip(request):
+    """Foydalanuvchining haqiqiy IP manzilini olish"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    
+    # IP validation - faqat to'g'ri formatdagi IP lar
+    if ip and _is_valid_ip(ip):
+        return ip
+    return '0.0.0.0'  # Default fallback
+
+
+def _is_valid_ip(ip):
+    """IP manzil formatini tekshirish"""
+    import ipaddress
+    try:
+        ipaddress.ip_address(ip)
+        return True
+    except ValueError:
+        return False
+
+
 def check_path_traversal(path):
     """
     Path traversal hujumini oldini olish
@@ -272,8 +296,6 @@ def rate_limit_key(request):
     Rate limiting uchun unique key yaratish
     IP va User Agent kombinatsiyasi
     """
-    from .middleware import get_client_ip
-    
     ip = get_client_ip(request)
     user_agent = request.META.get('HTTP_USER_AGENT', '')[:50]
     

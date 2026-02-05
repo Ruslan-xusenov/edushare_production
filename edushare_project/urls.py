@@ -36,6 +36,13 @@ urlpatterns = [
     path('', include('core.urls')),
     path('courses/', include('courses.urls')),
     path('profile/', include('accounts.urls')),
+    
+    # API endpoints
+    path('api/', include('courses.api_urls')),
+    path('api/accounts/', include('accounts.urls')),
+    path('api-auth/', include('rest_framework.urls')),
+    
+    # SEO
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
     path('robots.txt', TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
 ]

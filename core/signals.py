@@ -7,7 +7,8 @@ from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from allauth.account.signals import user_signed_up
 from .models import UserActivityLog
-from .middleware import get_client_ip, parse_user_agent
+from .middleware import parse_user_agent
+from .security_utils import get_client_ip
 import logging
 
 logger = logging.getLogger(__name__)

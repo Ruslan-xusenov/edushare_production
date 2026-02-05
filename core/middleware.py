@@ -14,33 +14,14 @@ from django.utils.html import escape
 from .models import IPBlocklist, UserActivityLog
 from .security_utils import (
     check_sql_injection, check_xss_attack, 
-    check_path_traversal, log_security_event
+    check_path_traversal, log_security_event,
+    get_client_ip
 )
 import re
 
 
-def get_client_ip(request):
-    """Foydalanuvchining haqiqiy IP manzilini olish"""
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0].strip()
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    
-    # IP validation - faqat to'g'ri formatdagi IP lar
-    if ip and _is_valid_ip(ip):
-        return ip
-    return '0.0.0.0'  # Default fallback
 
-
-def _is_valid_ip(ip):
-    """IP manzil formatini tekshirish"""
-    import ipaddress
-    try:
-        ipaddress.ip_address(ip)
-        return True
-    except ValueError:
-        return False
+# IP validation functions moved to security_utils.py
 
 
 def parse_user_agent(user_agent_string):
@@ -140,7 +121,9 @@ class AdvancedSecurityMiddleware:
                 f'SQL injection detected from IP: {ip_address} - Path: {request.path}',
                 'CRITICAL'
             )
-            self.auto_block_ip(ip_address, 'sql_injection')
+            from django.conf import settings
+            if not settings.DEBUG:
+                self.auto_block_ip(ip_address, 'sql_injection')
             return self._forbidden_response('Xavfli so\'rov topildi (SQL)')
         
         # 3. XSS hujum tekshiruvi
@@ -150,7 +133,9 @@ class AdvancedSecurityMiddleware:
                 f'XSS attack detected from IP: {ip_address} - Path: {request.path}',
                 'CRITICAL'
             )
-            self.auto_block_ip(ip_address, 'xss_attack')
+            from django.conf import settings
+            if not settings.DEBUG:
+                self.auto_block_ip(ip_address, 'xss_attack')
             return self._forbidden_response('Xavfli so\'rov topildi (XSS)')
         
         # 4. Path Traversal tekshiruvi
@@ -160,7 +145,9 @@ class AdvancedSecurityMiddleware:
                 f'Path traversal detected from IP: {ip_address} - Path: {request.path}',
                 'CRITICAL'
             )
-            self.auto_block_ip(ip_address, 'path_traversal')
+            from django.conf import settings
+            if not settings.DEBUG:
+                self.auto_block_ip(ip_address, 'path_traversal')
             return self._forbidden_response('Xavfli path topildi')
         
         # 5. DDoS protection - Rate limiting
@@ -200,12 +187,16 @@ class AdvancedSecurityMiddleware:
         
         # GET parametrlar tekshiruvi
         for key, value in request.GET.items():
+            if key in ['q', 'search', 'query']:
+                continue # Qidiruv parametrlarini o'tkazib yuboramiz (faqat text bo'lishi kutiladi)
             if check_sql_injection(str(value)):
                 return True
         
         # POST parametrlar tekshiruvi (faqat text data)
         if request.method == 'POST':
             for key, value in request.POST.items():
+                if key in ['q', 'search', 'query']:
+                    continue
                 if isinstance(value, str) and check_sql_injection(value):
                     return True
         

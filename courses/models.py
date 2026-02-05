@@ -14,6 +14,7 @@ class Category(models.Model):
     ]
     
     name = models.CharField(max_length=100, choices=CATEGORY_CHOICES, unique=True)
+    slug = models.SlugField(max_length=100, unique=True, blank=True)
     display_name = models.CharField(max_length=100)
     icon = models.CharField(max_length=50, blank=True, help_text="Icon class name (e.g., 'fa-music')")
     description = models.TextField(blank=True)
@@ -22,6 +23,12 @@ class Category(models.Model):
     class Meta:
         verbose_name_plural = 'Categories'
         ordering = ['display_name']
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(self.display_name)
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return self.display_name
@@ -106,10 +113,14 @@ class Lesson(models.Model):
 class Assignment(models.Model):
     lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE, related_name='assignment')
     question_text = models.TextField(help_text="The assignment question or task description")
+    option_a = models.CharField(max_length=255, blank=True, null=True)
+    option_b = models.CharField(max_length=255, blank=True, null=True)
+    option_c = models.CharField(max_length=255, blank=True, null=True)
+    option_d = models.CharField(max_length=255, blank=True, null=True)
     max_score = models.IntegerField(default=100)
-    allow_file_upload = models.BooleanField(default=True, help_text="Allow students to upload files")
+    allow_file_upload = models.BooleanField(default=False, help_text="Allow students to upload files")
     allow_text_answer = models.BooleanField(default=True, help_text="Allow students to submit text answers")
-    correct_answer = models.CharField(max_length=255, blank=True, null=True, help_text="Correct answer for automatic scoring")
+    correct_answer = models.CharField(max_length=255, blank=True, null=True, help_text="Correct answer (e.g., 'A', 'B', 'C', or 'D')")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -224,7 +235,3 @@ def handle_submission_grading(sender, instance, created, **kwargs):
         elif not cert.pdf_file:
             from .utils import generate_certificate_pdf
             generate_certificate_pdf(cert)
-
-
-
-
